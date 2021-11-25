@@ -62,17 +62,10 @@ class ProductView(APIView):
         else:
             return Response({'success':'false', 'error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-# product의 id로 조회는 상관없지 않나 
     def get(self, request, **kwargs):
-        if kwargs.get('uid') is None:
-            queryset = Product.objects.all()
-            serializer = ProductSerializer(queryset, many=True)
-            return Response({'count':queryset.count(), 'data':serializer.data}, status=status.HTTP_200_OK)
-        else:
-            uid = kwargs.get('uid')
-            queryset = Product.objects.get(id=uid)
-            serializer = ProductSerializer(queryset)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        queryset = Product.objects.all()
+        serializer = ProductSerializer(queryset, many=True)
+        return Response({'count':queryset.count(), 'data':serializer.data}, status=status.HTTP_200_OK)
 
     def put(self, request, **kwargs):
         if kwargs.get('uid') is None:

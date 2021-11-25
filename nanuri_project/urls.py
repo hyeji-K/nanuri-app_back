@@ -39,7 +39,8 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('nanuri/', include('api_user.urls'), name='api_user'),
+    path('', include('api_user.urls'), name='api_user'),
+    path('', include('area_api.urls'), name='area_api'),
 ]
 
 if settings.DEBUG:
