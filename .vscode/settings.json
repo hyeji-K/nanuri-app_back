@@ -1,3 +1,8 @@
 {
-    "python.pythonPath": "/Users/hyeji/opt/anaconda3/envs/django/bin/python"
+    "python.pythonPath": "/Users/hyeji/opt/anaconda3/envs/django/bin/python",
+
+    // "SECRET_KEY" : "tgq^b!mv^0^!3$9h40k@b%cw3ds&umo=woq&)ch9t30^38033y",
+    // "KAKAO_REST_API_KEY":"KakaoAK 15c1f6d77428c2b5efd9bce5402a1f8c",
+    // "KAKAO_SECRET_KEY": "EdmJIxUOwDJRsz9YvcEo9Kz8EQ3oRn6p",
+
 }
