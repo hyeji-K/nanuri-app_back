@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'rest_framework',
     'api_user',
+    'drf_yasg',
 ]
 SITE_ID = 1
 

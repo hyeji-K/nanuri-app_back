@@ -4,13 +4,8 @@ import uuid
 
 # Create your models here.
 class User(models.Model):
-    # user_id = models.CharField(max_length=50, null=False)
-    # password = models.CharField(max_length=30, null=False)
-    # name = models.CharField(max_length=50, null=False)
-    # address = models.CharField(max_length=100, null=False)
-
-
     # userid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False) # db의 id랑 겹치는데 왜 때문인지??? 
+    id = models.AutoField(primary_key=True)
     userEmail = models.EmailField(max_length=100, unique=True, null=False) # 사용자의 이메일 
     userArea = models.CharField(max_length=100, null=False) # 사용자의 동네 
     userName = models.CharField(max_length=50, unique=True, null=False) # 사용자의 닉네임
@@ -24,4 +19,29 @@ class User(models.Model):
     class Meta:
         db_table = "User"
 
+class Product(models.Model):
+    # no = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
+    # category = models.CharField
+    productName = models.CharField(max_length=100, null=False)
+    # link = models.URLField()
+    # productImage = models.ImageField(up) # 이미지는 나중에 허허 .. 
+    productPrice = models.IntegerField(null=False)
+    totalPplCnt = models.IntegerField(null=False)
+    joinPplCnt = models.IntegerField(null=True)
+    startPeriod = models.DateField(auto_now_add=True, null=False)
+    endPeriod = models.DateField(null=False)
+    deliveryMethod = models.CharField(max_length=10, null=False)
+    detailContent = models.CharField(max_length=100, null=True)
+    createdAt = models.DateTimeField(auto_now_add=True, null=False)
+    # activated = models.BooleanField # 활성화 상태
 
+    class Meta:
+        db_table = "Product"
+
+# class Categorys(models.Model):
+#     categoryName = models.CharField(max_length=50, null=False)
+
+
+# class BuyProductList(models.Model):
+#     pass
