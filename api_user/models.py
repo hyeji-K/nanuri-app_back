@@ -68,6 +68,9 @@ class Product(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
     category_id = models.ForeignKey(Category, db_column='category_id', on_delete=models.CASCADE)
 
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
+    category_id = models.ForeignKey(Category, db_column='category_id', on_delete=models.CASCADE)
+
     class Meta:
         db_table = "Product"
 
