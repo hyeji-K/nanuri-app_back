@@ -9,6 +9,7 @@ from django.db.models.fields import AutoField
 class SocialLogin(models.Model):
     id = models.AutoField(primary_key=True, null=False, unique=True)
     social_id = models.CharField(max_length=128, null=False, unique=True)
+    # social_type = models.CharField(max_length=128, null=False)
 
     class Meta:
         db_table = "SocialLogin"
