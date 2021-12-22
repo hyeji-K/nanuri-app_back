@@ -2,8 +2,8 @@ from django.http import request
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from api_user.models import Product, Category, User, SocialLogin
-from api_user.serializer import ProductSerializer, CategorySerializer, UserSerializer, LoginSerializer
+from api_user.models import SocialLogin, User, Category, Product, Comment
+from api_user.serializer import LoginSerializer, UserSerializer, CategorySerializer, ProductSerializer, CommentSerializer
 from rest_framework import serializers, status
 
 # Create your views here.
@@ -81,14 +81,13 @@ class UserView(APIView):
 
 # Category
 class CategoryView(APIView):
-    # 카테고리 추가 완
-    # def post(self, request):
-    #     category_serializer = CategorySerializer(data=request.data)
-    #     if category_serializer.is_valid():
-    #         category_serializer.save()
-    #         return Response(category_serializer.data, status=status.HTTP_200_OK)
-    #     else:
-    #         return Response({'success':'false', 'error':category_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        category_serializer = CategorySerializer(data=request.data)
+        if category_serializer.is_valid():
+            category_serializer.save()
+            return Response(category_serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'success':'false', 'error':category_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, **kwargs):
         if kwargs.get('category_id') is None:
@@ -140,3 +139,22 @@ class ProductView(APIView):
             object = Product.objects.get(id=uid)
             object.delete()
             return Response({'delete':'true', 'message':"delete ok"}, status=status.HTTP_200_OK)
+
+class CommentView(APIView):
+    def post(self, request):
+        serializer = CommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'success':'true', 'comments':serializer.data}, status=status.HTTP_200_OK)
+        else:
+            return Response({'success':'false', 'error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, **kwargs):
+        if kwargs.get('product_id') is None:
+            comment_queryset = Comment.objects.all()
+            comment_serializer = CommentSerializer(comment_queryset, many=True)
+            return Response({'count':comment_queryset.count(), 'comments':comment_serializer.data}, status=status.HTTP_200_OK)
+        else:
+            id = kwargs.get('product_id')
+            comment_serializer = CommentSerializer(Comment.objects.get(product_id=id))
+            return Response({'comments':comment_serializer.data}, status=status.HTTP_200_OK)
