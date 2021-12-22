@@ -27,7 +27,14 @@ schema_view = get_schema_view(
     openapi.Info( 
         title="Nanuri API", 
         default_version="v1", 
-        description="Nanuri를 위한 API 문서", 
+        description=
+        """
+        Nanuri를 위한 API 문서입니다.
+        
+        Nanuri는 자취생들을 위한 공동구매 앱입니다.
+
+        팀원: 김서현, 김혜지, 이희대, 최민경
+        """, 
         terms_of_service="https://www.google.com/policies/terms/", 
         # contact=openapi.Contact(name="test", email="test@test.com"), 
         # license=openapi.License(name="Test License"), 
