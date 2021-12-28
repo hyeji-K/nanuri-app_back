@@ -2,7 +2,10 @@ from django.db import models
 from django.db.models.expressions import F
 import uuid
 
-from django.db.models.fields import AutoField
+from django.db.models.fields import AutoField, CharField
+from rest_framework.fields import DictField, ListField
+from django.utils.text import slugify
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 # Create your models here.
 # 소셜로그인 테이블
@@ -22,11 +25,11 @@ class User(models.Model):
     user_area = models.CharField(max_length=128, null=False) # 사용자의 동네 
     user_nick = models.CharField(max_length=128, unique=True, null=False) # 사용자의 닉네임
     score = models.IntegerField(default=0, null=True) # 사용자의 점수 
-    user_bank = models.CharField(max_length=32, blank=True, null=True) # 사용자의 은행 이름 
-    banknum = models.IntegerField(blank=True, null=True) # 사용자의 은행 계좌
-    user_number = models.IntegerField(blank=True, null=True) # 사용자의 전화번호
-    created_at = models.DateTimeField(auto_now_add=True, null=False) # 사용자의 가입일
-    update_at = models.DateTimeField(auto_now=True) # 수정 날짜
+    user_bank = models.CharField(max_length=32, blank=True, default="") # 사용자의 은행 이름 
+    banknum = models.IntegerField(blank=True, default=0) # 사용자의 은행 계좌
+    user_number = models.IntegerField(blank=True, default=0) # 사용자의 전화번호
+    created_at = models.DateField(auto_now_add=True, null=False) # 사용자의 가입일
+    update_at = models.DateField(auto_now=True) # 수정 날짜
     # activated = models.BooleanField(null=True) # 사용자의 활성화 상태 (0 또는 1) 로그인하면 1 탈퇴하면 0
 
     social_id = models.ForeignKey(SocialLogin, null=False, on_delete=models.CASCADE, db_column='social_id')
@@ -38,13 +41,17 @@ class User(models.Model):
 class Category(models.Model):
     category_id = models.AutoField(primary_key=True, null=False)
     category_name = models.CharField(max_length=50, null=False, unique=True)
-    # slug = models.SlugField(max_length=200, unique=True, allow_unicode=True)
+    slug = models.SlugField(max_length=200, unique=True, allow_unicode=True)
 
     # def get_absolute_url(self):
     #     return f'/category/{self.slug}/'
 
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.category_name)
+        super(Category, self).save(*args, **kwargs)
+
     class Meta:
-        db_table = "Categories"
+        db_table = "Category"
 
 # 상품 등록 테이블
 class Product(models.Model):
@@ -55,8 +62,8 @@ class Product(models.Model):
     # productImage = models.ImageField(up) # 이미지는 일단 charfield로 
     product_image = models.CharField(max_length=400, null=True)
     product_price = models.IntegerField(null=False) # default=0 추가?? 
-    total_ppl_cnt = models.IntegerField(null=True)
-    join_ppl_cnt = models.IntegerField(null=True, default=1)
+    total_ppl_cnt = models.IntegerField(null=True, validators=[MinValueValidator(1), MaxValueValidator(100)])
+    join_ppl_cnt = models.IntegerField(null=True, default=1, validators=[MinValueValidator(0), MaxValueValidator(100)])
     start_date = models.DateField(auto_now_add=True, null=False)
     end_date = models.DateField(null=False)
     delivery_method = models.CharField(max_length=10, null=False)
@@ -65,15 +72,27 @@ class Product(models.Model):
     update_at = models.DateTimeField(auto_now=True)
     # activated = models.BooleanField # 활성화 상태
     # 유저의 동네 정보를 가져와서 상품 테이블에 저장을 해야 동네별로 상품을 보여줄 수 있지 않을까?
-
+    
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
     category_id = models.ForeignKey(Category, db_column='category_id', on_delete=models.CASCADE)
 
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
-    category_id = models.ForeignKey(Category, db_column='category_id', on_delete=models.CASCADE)
+    # user_id = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
+    # category_id = models.ForeignKey(Category, db_column='category_id', on_delete=models.CASCADE)
 
     class Meta:
         db_table = "Product"
+
+# 주문 테이블
+class Order(models.Model):
+    order_id = AutoField(primary_key=True, null=False, unique=True)
+    credit_method = CharField(max_length=50, null=False)
+    created_at = models.DateField(auto_now_add=True)
+
+    product_id = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='products')
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "Order"
 
 
 # 댓글 테이블
