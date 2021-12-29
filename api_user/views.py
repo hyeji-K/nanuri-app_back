@@ -2,8 +2,8 @@ from django.http import request
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from api_user.models import SocialLogin, User, Category, Product, Comment
-from api_user.serializer import LoginSerializer, UserSerializer, CategorySerializer, ProductSerializer, CommentSerializer, CategoryBodySerializer, CommentBodySerializer, LoginBodySerializer, ProductBodySerializer, UserBodySerializer
+from api_user.models import SocialLogin, User, Category, Product, Comment, Order
+from api_user.serializer import LoginSerializer, UserSerializer, CategorySerializer, ProductSerializer, CommentSerializer, CategoryBodySerializer, CommentBodySerializer, LoginBodySerializer, ProductBodySerializer, UserBodySerializer, EachUserBodySerializer, OrderSerializer, OrderBodySerializer, CategoryEachSerializer, UserProductsSerializer
 from rest_framework import serializers, status
 
 #swagger
@@ -13,6 +13,13 @@ from drf_yasg.utils import swagger_auto_schema
 class LoginView(APIView):
     @swagger_auto_schema(request_body=LoginBodySerializer, operation_summary="Add SocialLogin ID")
     def post(self, request):
+        """
+            소셜로그인 정보를 등록하는 API
+            ---
+            ### 내용
+            - ### id : PK
+            - ### social_id : 소셜로그인의 ID
+        """
         login_serializer = LoginSerializer(data=request.data)
         if login_serializer.is_valid():
             login_serializer.save()
@@ -22,6 +29,13 @@ class LoginView(APIView):
 
     @swagger_auto_schema(operation_summary="Returns all SocialLogin ID")
     def get(self, request):
+        """
+            소셜로그인 정보를 불러오는 API
+            ---
+            ### 내용
+            - ### id : PK
+            - ### social_id : 소셜로그인의 ID
+        """
         login_queryset = SocialLogin.objects.all()
         login_serializer = LoginSerializer(login_queryset, many=True)
         return Response({'count':login_queryset.count(), 'data':login_serializer.data}, status=status.HTTP_200_OK)
@@ -49,9 +63,7 @@ class UserView(APIView):
             - ### user_id : 사용자의 UUID
             - ### user_area : 사용자의 동네 
             - ### user_nick : 사용자의 닉네임
-            - ### user_bank : 사용자의 은행
-            - ### banknum : 사용자의 은행 계좌번호
-            - ### user_number : 사용자의 폰 번호
+            - ### social_id : 소셜로그인 PK
         """
         user_serializer = UserSerializer(data=request.data)
         if user_serializer.is_valid():
@@ -75,6 +87,7 @@ class UserView(APIView):
             - ### user_number : 사용자의 폰 번호
             - ### created_at : 사용자의 가입 날짜
             - ### update_at : 사용자 정보 변경 날짜
+            - ### social_id : 소셜로그인 PK
         """
         user_queryset = User.objects.all()
         user_serializer = UserSerializer(user_queryset, many=True)
@@ -96,6 +109,7 @@ class EachUserView(APIView):
             - ### user_number : 사용자의 폰 번호
             - ### created_at : 사용자의 가입 날짜
             - ### update_at : 사용자 정보 변경 날짜
+            - ### social_id : 소셜로그인 PK
         """
         if kwargs.get('user_id') is None:
             user_queryset = User.objects.all()
@@ -103,23 +117,41 @@ class EachUserView(APIView):
             return Response({'count':user_queryset.count(), 'data':user_serializer.data}, status=status.HTTP_200_OK)
         else:
             id = kwargs.get('user_id')
-            user_queryset = UserSerializer(User.objects.get(user_id=id))
+            user_queryset = UserProductsSerializer(User.objects.get(user_id=id))
 
-            # return Response({'user':user_queryset.data}, status=status.HTTP_200_OK)
+            # 구매한 상품
+            product_count = Order.objects.filter(user_id=id).values_list('product_id', flat=True) # [1, 2, 3]
+            order_product = []
+            for i in product_count:
+                product = Product.objects.filter(product_id=i)
+                product_serializer = ProductSerializer(product, many=True)
+                order_product.extend(product_serializer.data)
 
-            # 등록한 상품
-            products = Product.objects.filter(user_id=id)
-            product_serializer = ProductSerializer(products, many=True)
-            return Response({'user':user_queryset.data, 'products':product_serializer.data}, status=status.HTTP_200_OK)
+            return Response({'user':user_queryset.data, 'orders':order_product}, status=status.HTTP_200_OK)
 
-    @swagger_auto_schema(request_body=UserBodySerializer, operation_summary="Update a user by user id")
+    @swagger_auto_schema(request_body=EachUserBodySerializer, operation_summary="Update a user by user id")
     def put(self, request, **kwargs):
+        """
+            회원 정보를 수정하는 API
+            ---
+            ### 내용
+            - ### user_id : 사용자의 UUID
+            - ### user_area : 사용자의 동네 
+            - ### user_nick : 사용자의 닉네임
+            - ### user_bank : 사용자의 은행
+            - ### banknum : 사용자의 은행 계좌번호
+            - ### user_number : 사용자의 폰 번호
+            - ### social_id : 소셜로그인 PK
+        """
         if kwargs.get('user_id') is None:
             return Response({'result':'fail', 'error':"Invalid request"}, status=status.HTTP_404_NOT_FOUND)
         else:
             id = kwargs.get('user_id')
             user_object = User.objects.get(user_id=id)
+            # product_object = Product.objects.get(user_id=id)
             update_serializer = UserSerializer(user_object, data=request.data)
+            # update_product_serializer = ProductSerializer(product_object, data=request.data)
+
             if update_serializer.is_valid():
                 update_serializer.save()
                 return Response({'update':'success', 'data':update_serializer.data}, status=status.HTTP_200_OK)
@@ -180,11 +212,8 @@ class EachCategoryView(APIView):
             return Response({'count':category_queryset.count(), 'categorys':category_serializer.data}, status=status.HTTP_200_OK)
         else:
             id = kwargs.get('category_id')
-            category_serializer = CategorySerializer(Category.objects.get(category_id=id))
-            # 등록한 상품
-            products = Product.objects.filter(category_id=id)
-            product_serializer = ProductSerializer(products, many=True)
-            return Response({'category':category_serializer.data, 'products':product_serializer.data}, status=status.HTTP_200_OK)
+            category_serializer = CategoryEachSerializer(Category.objects.get(category_id=id))
+            return Response({'category':category_serializer.data}, status=status.HTTP_200_OK)
     
     @swagger_auto_schema(operation_summary="Delete a category by category ID")
     def delete(self, request, **kwargs):
@@ -283,14 +312,14 @@ class EachProductView(APIView):
             - ### user_id : 상품을 등록한 사용자 ID
             - ### category_id : 상품의 카테고리 ID
         """
-        if kwargs.get('uid') is None:
+        if kwargs.get('product_id') is None:
             queryset = Product.objects.all()
             serializer = ProductSerializer(queryset, many=True)
             return Response({'count':queryset.count(), 'products':serializer.data}, status=status.HTTP_200_OK)
         else:
-            uid = kwargs.get('uid')
-            object = Product.objects.get(product_id=uid)
-            product_serializer = ProductSerializer(object, data=request.data)
+            uid = kwargs.get('product_id')
+            object = Product.objects.filter(product_id=uid)
+            product_serializer = ProductSerializer(object, many=True)
             return Response({'products':product_serializer.data}, status=status.HTTP_200_OK)
 
     # @swagger_auto_schema(operation_summary="Update a product by product ID")
@@ -349,10 +378,10 @@ class EachProductView(APIView):
             - ### user_id : 상품을 등록한 사용자 ID
             - ### category_id : 상품의 카테고리 ID
         """
-        if kwargs.get('uid') is None:
+        if kwargs.get('product_id') is None:
             return Response({'delete':'false', 'error':"Invalid request".data}, status=status.HTTP_404_NOT_FOUND)
         else:
-            uid = kwargs.get('uid')
+            uid = kwargs.get('product_id')
             object = Product.objects.get(product_id=uid)
             object.delete()
             return Response({'delete':'true', 'message':"delete ok"}, status=status.HTTP_200_OK)
@@ -415,3 +444,50 @@ class EachCommentView(APIView):
             id = kwargs.get('product_id')
             comment_serializer = CommentSerializer(Comment.objects.get(product_id=id))
             return Response({'comments':comment_serializer.data}, status=status.HTTP_200_OK)
+
+class OrderView(APIView):
+    @swagger_auto_schema(operation_summary="Find a order by product id")
+    def get(self, request, **kwargs):
+        """
+            user ID에 따른 상품을 주문하는 API
+            ---
+            ### 내용
+            - ### user_id : 상품 주문을 하는 사용자 ID
+            - ### product_id : 주문하려는 상품 ID
+            - ### credit_method : 주문 방법(카드 or 계좌)
+            - ### created_at : 주문 날짜
+        """
+        if kwargs.get('user_id') is None:
+            order_queryset = Order.objects.all().order_by('user_id')
+            order_serializer = OrderSerializer(order_queryset, many=True)
+            return Response({'count':order_queryset.count(), 'order':order_serializer.data}, status=status.HTTP_200_OK)
+        else:
+            id = kwargs.get('user_id')
+            # 구매한 상품
+            # products = Order.objects.filter(user_id=id).select_related('Products').values()
+            orders = Order.objects.filter(user_id=id)
+            order_serializer = OrderSerializer(orders, many=True)
+            pro = Order.objects.filter(user_id=id).values_list('product_id', flat=True) # [1, 2, 3]
+            order_product = []
+            for i in pro:
+                product = Product.objects.filter(product_id=i)
+                product_serializer = ProductSerializer(product, many=True)
+                order_product.extend(product_serializer.data)
+            return Response({'count':orders.count(), 'products':order_product}, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(request_body=OrderBodySerializer, operation_summary="Add comment")
+    def post(self, request):
+        """
+            user ID에 따른 상품을 주문하는 API
+            ---
+            ### 내용
+            - ### user_id : 상품 주문을 하는 사용자 ID
+            - ### product_id : 주문하려는 상품 ID
+            - ### credit_method : 주문 방법(카드 or 계좌)
+        """
+        serializer = OrderSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'success':'true', 'comments':serializer.data}, status=status.HTTP_200_OK)
+        else:
+            return Response({'success':'false', 'error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
