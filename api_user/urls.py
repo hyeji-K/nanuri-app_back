@@ -10,7 +10,7 @@ urlpatterns = [
     path('users/<int:user_id>', views.EachUserView.as_view()),
     path('category/', views.CategoryView.as_view()),
     path('category/<int:category_id>', views.EachCategoryView.as_view()),
-    path('category/<str:slug>/', views.EachCategoryView.as_view()),
+    # path('category/<str:slug>/', views.EachCategoryView.as_view()),
     # path('users/<int:uid>/regiproducts/', views.ProductView.as_view()),
     path('products/', views.ProductView.as_view()),
     path('products/<int:product_id>', views.EachProductView.as_view()),

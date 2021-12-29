@@ -32,7 +32,7 @@ class User(models.Model):
     update_at = models.DateField(auto_now=True) # 수정 날짜
     # activated = models.BooleanField(null=True) # 사용자의 활성화 상태 (0 또는 1) 로그인하면 1 탈퇴하면 0
 
-    social_id = models.ForeignKey(SocialLogin, null=False, on_delete=models.CASCADE, db_column='social_id')
+    social_id = models.ForeignKey(SocialLogin, on_delete=models.CASCADE, db_column='social_id')
     
     class Meta:
         db_table = "User"
@@ -41,14 +41,14 @@ class User(models.Model):
 class Category(models.Model):
     category_id = models.AutoField(primary_key=True, null=False)
     category_name = models.CharField(max_length=50, null=False, unique=True)
-    slug = models.SlugField(max_length=200, unique=True, allow_unicode=True)
+    # slug = models.SlugField(max_length=200, unique=True, allow_unicode=True)
 
     # def get_absolute_url(self):
     #     return f'/category/{self.slug}/'
 
-    def save(self, *args, **kwargs):
-        self.slug = slugify(self.category_name)
-        super(Category, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     self.slug = slugify(self.category_name)
+    #     super(Category, self).save(*args, **kwargs)
 
     class Meta:
         db_table = "Category"
@@ -73,11 +73,8 @@ class Product(models.Model):
     # activated = models.BooleanField # 활성화 상태
     # 유저의 동네 정보를 가져와서 상품 테이블에 저장을 해야 동네별로 상품을 보여줄 수 있지 않을까?
     
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
-    category_id = models.ForeignKey(Category, db_column='category_id', on_delete=models.CASCADE)
-
-    # user_id = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
-    # category_id = models.ForeignKey(Category, db_column='category_id', on_delete=models.CASCADE)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id', related_name='products')
+    category_id = models.ForeignKey(Category, db_column='category_id', on_delete=models.CASCADE, related_name='products')
 
     class Meta:
         db_table = "Product"
@@ -88,8 +85,8 @@ class Order(models.Model):
     credit_method = CharField(max_length=50, null=False)
     created_at = models.DateField(auto_now_add=True)
 
-    product_id = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='products')
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
 
     class Meta:
         db_table = "Order"
