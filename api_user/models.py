@@ -59,8 +59,8 @@ class Product(models.Model):
     product_id = AutoField(primary_key=True, null=False, unique=True)
     product_name = models.CharField(max_length=100, null=False)
     link = models.URLField(max_length=1000, null=True)
-    # productImage = models.ImageField(up) # 이미지는 일단 charfield로 
-    product_image = models.CharField(max_length=400, null=True)
+    productImage = models.ImageField(blank=True, null=True) 
+    # product_image = models.CharField(max_length=400, null=True) # 이미지는 일단 charfield로 
     product_price = models.IntegerField(null=False) # default=0 추가?? 
     total_ppl_cnt = models.IntegerField(null=True, validators=[MinValueValidator(1), MaxValueValidator(100)])
     join_ppl_cnt = models.IntegerField(null=True, default=1, validators=[MinValueValidator(0), MaxValueValidator(100)])
